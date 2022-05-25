@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <title>Exercice frontend SpaceX</title>
+</head>
+<body>
+        
+    <div id="app">
+        <section id="intro">
+            <h1>{{ data["name"] }}</h1>
+            <h3>{{ data["date_utc"]}}</h3>
+            <h4>Countdown : {{ data["date_unix"]}}</h4>
+        </section>
+
+        <section id="select">
+            <h1>Type de lancements</h1>
+            <select @change="onChange($event)" @click="showModal = false" >
+                <option  value="none">Choose</option>
+                <option  value="all">Tous les lancements</option>
+                <option  value="true">Lancements réussis</option>
+                <option  value="false">Lancements échoués</option>
+            </select>
+    
+        </section>
+
+        <section id="list">
+            <ul>
+                <li v-for="show in shows">
+                    <h2>{{ show[0] }}</h2>
+                    <h4>{{ show[1] }}</h4>
+                    <p>{{ show[2] }}</p>
+                    <img :src="show[3]" :alt="show[3]">
+                    <a :href="show[4]" v-if="show[4] != null">Link</a> 
+                    <h4>{{ show[8] }}</h4>
+                    <h4>{{ show[6][0]}}</h4>
+                    <h4 v-for=" crew in show[7]"> {{ crew }}</h4>
+    
+    
+                    <button class="button" @click="showModal = true" v-if="show[5] != nul">
+                        Show Modal
+                       </button>
+                       <transition name="fade" appear>
+                        <div class="modal-overlay" v-if="showModal" @click="showModal = false"></div>
+                       </transition>
+                       <transition name="slide" appear>
+                        <div class="modal" v-if="showModal">
+                            <h1>Video</h1>
+                            <iframe :src="show[5]" width="350" height="315"></iframe>
+                            <button class="button" @click="showModal = false">
+                                Close Modal
+                            </button>
+                        </div>
+                       </transition>
+                </li>
+            </ul>
+    
+        </section>
+
+    </div>
+    <script>
+       let app = new Vue({
+            el: "#app",
+            data() {
+                return {
+                showModal: true,
+                data: {
+
+                },
+                shows : [],
+                }
+            },
+            beforeMount(){
+                this.get()
+                this.onChange()
+            },
+            methods:{
+                async get(){
+                    const res = await fetch('https://api.spacexdata.com/v4/launches/latest');
+                    const data = await res.json()
+                    this.data = data
+
+                    setInterval(() => {
+                        data["date_unix"] -- 
+                    },1000)
+    
+                },
+                async onChange(event){
+                    const res = await fetch('https://api.spacexdata.com/v4/launches');
+                    const bigdata = await res.json()
+                    this.bigdata = bigdata
+                    let liNumber = 0
+                    let all = [] 
+                    console.log(bigdata)
+                    for(let i = bigdata.length - 1; i >= 0; i--){
+                        if(event.target.value == "all" && liNumber < 10){
+                            liNumber ++   
+                            all.push([bigdata[i]["name"], bigdata[i]["date_utc"], bigdata[i]["details"], bigdata[i]["links"]["patch"]["small"], bigdata[i]["links"]["article"], bigdata[i]["links"]["webcast"], bigdata[i]["payloads"], bigdata[i]["crew"], bigdata[i]["cores"]["landpad"]])
+                            this.shows = all
+                        }else if(event.target.value == "true" && bigdata[i]["success"] == true && liNumber < 10){
+                            liNumber ++
+                            all.push([bigdata[i]["name"], bigdata[i]["date_utc"], bigdata[i]["details"], bigdata[i]["links"]["patch"]["small"], bigdata[i]["links"]["article"], bigdata[i]["links"]["webcast"], bigdata[i]["payloads"], bigdata[i]["crew"], bigdata[i]["cores"]["landpad"]])
+                            this.shows = all
+                        }else if(event.target.value == "false" && bigdata[i]["success"] == null && liNumber < 10){
+                            liNumber ++
+                            all.push([bigdata[i]["name"], bigdata[i]["date_utc"], bigdata[i]["details"], bigdata[i]["links"]["patch"]["small"], bigdata[i]["links"]["article"], bigdata[i]["links"]["webcast"], bigdata[i]["payloads"], bigdata[i]["crew"], bigdata[i]["cores"]["landpad"]])
+                            this.shows = all
+                        }else if(event.target.value == "none")(
+                            this.shows = []
+                        )
+                    }
+                }
+            }
+       }) 
+    </script>
+
+
+
+
+</body>
+</html>
